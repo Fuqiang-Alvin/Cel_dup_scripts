@@ -1,0 +1,38 @@
+library(GenomicRanges)
+library(stringr)
+library(dplyr)
+
+load("nonsyn_genes_strains.RData")
+nonsyn2 = filter(nonsyn2, nchar(strain) > 0)
+load("Allgenes.RData")
+load("divergent_regions_strain.RData)
+
+divergent_genes = list()
+GR = function(j){GRanges(seqnames = j$chr,ranges = IRanges(start = j$start, end = j$end, names = j$Wb)) }
+for (i in 1:nrow(Allgenes)){
+                 coding = filter(coding_biomart,Wb == Allgenes[i,"WBGene"])
+                  cur = filter(nonsyn2,gene == unique(coding[,"Wb"]))
+                  cur2 = divergent_regions_strain[divergent_regions_strain$strain %in% unique(unlist(str_split(cur[,"strain"],"_"))),]
+                  if (nrow(cur2) != 0){
+         cur2 = filter(cur2,chr == unique(as.character(coding$chr)))                         
+                             cur_gr=GR(coding)
+                              cur2_gr=GR(cur2)
+         cur_overlap = findOverlaps(cur_gr, cur2_gr)
+         }
+    if (length(cur_overlap) > 0) {
+                          divergent_genes[[i]]= coding
+    }
+}
+divergent_genes2 = do.call(rbind,divergent_genes)
+load("Cel_dup_N0.RData")
+load("Cel_dup_N1N3.RData")
+load("Cel_dup_N4Cel.RData")
+load("Singletons.RData")
+load("Celegans_expanded_specific_OGs.RData")
+load("others.RData")
+length(intersect(unique(divergent_genes2$Wb),unique(Cel_dup_N0$WBGene)))
+length(intersect(unique(divergent_genes2$Wb),unique(Cel_dup_N1N3$WBGene)))
+length(intersect(unique(divergent_genes2$Wb),unique(Cel_dup_N4Cel$WBGene)))
+length(intersect(unique(divergent_genes2$Wb),unique(Singletons$WBGene)))
+length(intersect(unique(divergent_genes2$Wb),unique(others$WBGene)))
+length(intersect(unique(divergent_genes2$Wb),unique(Celegans_expanded_specific_OGs$WBGene)))
