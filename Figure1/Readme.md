@@ -1,1 +1,1 @@
-Code used in figure 1
+Code used in Figure 1
