@@ -1,1 +1,1 @@
-This folder contains the supplementary data for the paper including the intermiate files used in analysis. 
+This folder contains the data for generating the results in the manuscript. 
