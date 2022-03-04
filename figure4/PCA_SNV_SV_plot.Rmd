@@ -1,0 +1,121 @@
+library("dplyr")
+library("SNPRelate")
+library("SeqArray")
+library("ggplot2")
+library("ggrepel")
+#SNV
+load("genofile_SNV.RData")
+load("Group.RData")
+set.seed(1000)
+#pruning
+snpset <- snpgdsLDpruning(genofile_SNV , ld.threshold = 0.9, autosome.only = F)
+genofile.id <- unlist(unname(snpset))
+pca <- snpgdsPCA(genofile_SNV, snp.id=genofile.id,  autosome.only = F)
+#variability of all the PC axis
+pc.percent <- pca$varprop * 100
+# Get sample id
+sample.id <- read.gdsn(index.gdsn(genofile_SNV, "sample.id"))
+
+pop_code <- c()
+for(i in 1:length(sample.id)){
+  if(sample.id[i] %in% Group$strain){
+    pop_code[i] <- Group[ Group$strain == sample.id[i]     , "grouping"] 
+  }else{
+    pop_code[i] <- "other"
+  }
+}
+
+tab <- data.frame(sample.id = pca$sample.id,
+    pop = factor(pop_code)[match(pca$sample.id, sample.id)],
+    EV1 = pca$eigenvect[,1],    # the first eigenvector
+    EV2 = pca$eigenvect[,2],    # the second eigenvector
+    stringsAsFactors = FALSE)
+	
+labname <- c("Europe_1","Europe_2","Europe_3","Europe_4","Hawaii_1","Hawaii_2","Hawaii_3","Hawaii_4","Hawaii_5","Hawaii_6","Hawaii_7")
+
+standardcolor=c("#2121D9","#9999FF","#DF0101","#04B404","#FFFB23","#FF9326","#A945FF","#0089B2","#B26314","#610B5E","#FE2E9A")
+names(standardcolor) <- labname
+outgroup <- tab[tab$sample.id=="XZ1516" |  tab$sample.id=="ECA701" | tab$sample.id=="ECA702"  ,]
+
+#SNV
+ggplot(tab , aes(x=EV1 , y=EV2,colour=pop) ,cex.axis=5,cex.lab=5) + geom_point(size=2)+labs( x=paste0("PC1 (",round(pc.percent[1],1),"%)"), y=paste0("PC2 (",round(pc.percent[2],1),"%)" ))+ scale_color_manual(values=standardcolor ,name="Population")+ geom_text_repel(data=outgroup,label=outgroup$sample.id, aes(x=EV1,y=EV2), size = 2.5, force=5, nudge_x=0.01,segment.size = 0.2, segment.alpha = 0.5, direction = 'x',min.segment.length = 0 )+theme(text = element_text(size=20),axis.title.x=element_text(size=14,face="bold",color="black"),axis.title.y=element_text(size=14,face="bold"),axis.text.x=element_text(size=12,color="black",face="bold"),axis.text.y=element_text(size=12,color="black",face="bold"))+ theme_bw() +theme(
+    plot.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+)
+#zoom in part
+ggplot(tab , aes(x=EV1 , y=EV2,colour=pop) ,cex.axis=5,cex.lab=5) + geom_point(size=2)+labs( x=paste0("PC1 (",round(pc.percent[1],1),"%)"), y=paste0("PC2 (",round(pc.percent[2],1),"%)" ))+ scale_color_manual(values=standardcolor ,name="Population")+ geom_text_repel(data=outgroup,label=outgroup$sample.id, aes(x=EV1,y=EV2), size = 2.5, force=5, nudge_x=0.01,segment.size = 0.2, segment.alpha = 0.5, direction = 'x',min.segment.length = 0 )+ xlim(-0.0165,-0.0036)+ylim(-0.009,0.007) + theme(text = element_text(size=20),axis.title.x=element_text(size=14,face="bold",color="black"),axis.title.y=element_text(size=14,face="bold"),axis.text.x=element_text(size=12,color="black",face="bold"),axis.text.y=element_text(size=12,color="black",face="bold"))+ theme_bw() +theme(
+    plot.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+)
+
+
+
+#SV
+load("genofile_SV.RData")
+set.seed(2000)
+#pruning
+snpset <- snpgdsLDpruning(genofile_SV , ld.threshold = 0.9, autosome.only = F)
+genofile.id <- unlist(unname(snpset))
+pca <- snpgdsPCA(genofile_SNV, snp.id=genofile.id,  autosome.only = F)
+#variability of all the PC axis
+pc.percent <- pca$varprop * 100
+# Get sample id
+sample.id <- read.gdsn(index.gdsn(genofile_SNV, "sample.id"))
+
+pop_code <- c()
+for(i in 1:length(sample.id)){
+  if(sample.id[i] %in% Group$strain){
+    pop_code[i] <- Group[ Group$strain == sample.id[i]     , "grouping"] 
+  }else{
+    pop_code[i] <- "other"
+  }
+}
+
+tab <- data.frame(sample.id = pca$sample.id,
+    pop = factor(pop_code)[match(pca$sample.id, sample.id)],
+    EV1 = pca$eigenvect[,1],    # the first eigenvector
+    EV2 = pca$eigenvect[,2],    # the second eigenvector
+    stringsAsFactors = FALSE)
+	
+labname <- c("Europe_1","Europe_2","Europe_3","Europe_4","Hawaii_1","Hawaii_2","Hawaii_3","Hawaii_4","Hawaii_5","Hawaii_6","Hawaii_7")
+
+standardcolor=c("#2121D9","#9999FF","#DF0101","#04B404","#FFFB23","#FF9326","#A945FF","#0089B2","#B26314","#610B5E","#FE2E9A")
+names(standardcolor) <- labname
+outgroup <- tab[tab$sample.id=="XZ1516" |  tab$sample.id=="ECA701" | tab$sample.id=="ECA702"  ,]
+
+#SNV
+ggplot(tab , aes(x=EV1 , y=EV2,colour=pop) ,cex.axis=5,cex.lab=5) + geom_point(size=2)+labs( x=paste0("PC1 (",round(pc.percent[1],1),"%)"), y=paste0("PC2 (",round(pc.percent[2],1),"%)" ))+ scale_color_manual(values=standardcolor ,name="Population")+ geom_text_repel(data=outgroup,label=outgroup$sample.id, aes(x=EV1,y=EV2), size = 2.5, force=5, nudge_x=0.01,segment.size = 0.2, segment.alpha = 0.5, direction = 'x',min.segment.length = 0 )+theme(text = element_text(size=20),axis.title.x=element_text(size=14,face="bold",color="black"),axis.title.y=element_text(size=14,face="bold"),axis.text.x=element_text(size=12,color="black",face="bold"),axis.text.y=element_text(size=12,color="black",face="bold"))+ theme_bw() +theme(
+    plot.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+)
+#zoom in part
+ggplot(tab , aes(x=EV1 , y=EV2,colour=pop) ,cex.axis=5,cex.lab=5) + geom_point(size=2)+labs( x=paste0("PC1 (",round(pc.percent[1],1),"%)"), y=paste0("PC2 (",round(pc.percent[2],1),"%)" ))+ scale_color_manual(values=standardcolor ,name="Population")+ geom_text_repel(data=outgroup,label=outgroup$sample.id, aes(x=EV1,y=EV2), size = 2.5, force=5, nudge_x=0.01,segment.size = 0.2, segment.alpha = 0.5, direction = 'x',min.segment.length = 0 )+ xlim(-0.0165,-0.0036)+ylim(-0.009,0.007) + theme(text = element_text(size=20),axis.title.x=element_text(size=14,face="bold",color="black"),axis.title.y=element_text(size=14,face="bold"),axis.text.x=element_text(size=12,color="black",face="bold"),axis.text.y=element_text(size=12,color="black",face="bold"))+ theme_bw() +theme(
+    plot.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
