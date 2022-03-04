@@ -1,0 +1,110 @@
+cnv =read.csv("Genes_copy.csv",header=T)
+for (i in 1:nrow(cnv)) {
+    cnv[i,"variance"] = var(c(as.numeric(unlist(cnv[i,2:766]))))
+}
+load("Cel_dup_N0.RData")
+load("Cel_dup_N1N3.RData")
+load("Cel_dup_N4Cel.RData")
+load("Singletons.RData")
+load("others.RData")
+N4Cel_var = cnv[cnv$WBGene %in% Cel_dup_N4Cel$WBGene,]$variance
+N1N3_var = cnv[cnv$WBGene %in% Cel_dup_N1N3$WBGene,]$variance
+N0_var = cnv[cnv$WBGene %in% Cel_dup_N0$WBGene,]$variance
+Singletons_var = cnv[cnv$WBGene %in% Singletons$WBGene,]$variance
+Others_var = cnv[cnv$WBGene %in% others$WBGene,]$variance
+#domain
+domain=read.csv("Domain_11_species.csv",header=T)
+domain_elegans=filter(domain,species=="elegans")
+cnv_domain=domain_elegans[domain_elegans$Wb %in% intersect(Cel_dup_N4Cel$WBGene,cnv$WBGene),]
+cnv_domain_summary=data.frame(summary(cnv_domain$domain, maxsum = max(lengths(lapply(cnv_domain, unique)))))
+
+#CNV example genes
+load("Group.RData")
+cnv=cnv[,-which(colnames(cnv) %in% c(filter(group,grouping == "Hawaii_2")$strain,"ECA551"))]
+straingroup <- c()
+for(i in 1:length(cols)){
+   straingroup <- append(straingroup , filter(group,strain==cols[i])$grouping )
+ }
+groupname <- unique(straingroup)
+groupname <- groupname[-6]
+straingroup <- factor(straingroup)
+
+F22G12.3=data.frame(matrix(ncol=10,nrow=200,data=rep(NA,10*200)))
+for (i in 1:10) {
+          cur=cnv[cnv$name %in% "WBGene00009063",][straingroup == groupname[groupname == groupname[i]]]
+          for (j in 1:ncol(cur)){
+         F22G12.3[j,i]=t(cur[1,j])
+ }
+ }
+colnames(F22G12.3)=groupname
+
+fbxb_91=data.frame(matrix(ncol=10,nrow=200,data=rep(NA,10*200)))
+for (i in 1:10) {
+          cur=cnv[cnv$name %in% "WBGene00044692",][straingroup == groupname[groupname == groupname[i]]]
+          for (j in 1:ncol(cur)){
+         fbxb_91[j,i]=t(cur[1,j])
+ }
+ }
+
+srw_85=data.frame(matrix(ncol=10,nrow=200,data=rep(NA,10*200)))
+for (i in 1:10) {
+          cur=cnv[cnv$name %in% "WBGene00005832",][straingroup == groupname[groupname == groupname[i]]]
+          for (j in 1:ncol(cur)){
+         srw_85[j,i]=t(cur[1,j])
+ }
+ }
+colnames(srw_85)=groupname
+write.csv(srw_85,file="srw_85.csv",row.names=F)
+
+srh_208=data.frame(matrix(ncol=10,nrow=200,data=rep(NA,10*200)))
+for (i in 1:10) {
+          cur=cnv[cnv$name %in% "WBGene00005418",][straingroup == groupname[groupname == groupname[i]]]
+          for (j in 1:ncol(cur)){
+         srh_208[j,i]=t(cur[1,j])
+ }
+ }
+colnames(srh_208)=groupname
+
+#Vst calculation
+getVst <- function(dat, groups, comparison) {
+  groupLevels <- levels(groups)
+  dat1 <- na.omit(dat[groups==groupLevels[groupLevels==comparison[1]]])
+  dat2 <- na.omit(dat[groups==groupLevels[groupLevels==comparison[2]]])
+  Vtotal <- var(c(dat1, dat2))
+  Vgroup <- ((var(dat1)*length(dat1)) + (var(dat2)*length(dat2))) /
+             (length(dat1)+length(dat2))
+  Vst <- c((Vtotal-Vgroup) / Vtotal)
+  if (Vst == "NaN" | is.na(Vst)){
+    Vst <- 0
+  }
+  return(Vst)
+}
+
+for(i in 1:10){
+    for(j in i:10){
+        if(i != j){
+            name <- paste("vst",groupname[i],groupname[j],sep="_")
+            
+            cnv[,name] <- apply(cnv,1,function(x) getVst(x,straingroup,c(groupname[i],groupname[j])))
+        }
+    }
+}
+for (i in 1:nrow(cnv)){
+    cnv[i,"vst"]=mean(as.numeric(gsub('NA','',as.character(cnv[i,766:810]))))
+}
+N4Cel_var = cnv[cnv$WBGene %in% Cel_dup_N4Cel$WBGene,]$vst
+Singletons_var = cnv[cnv$WBGene %in% Singletons$WBGene,]$vst
+
+
+
+
+
+
+
+
+
+
+
+
+
+
