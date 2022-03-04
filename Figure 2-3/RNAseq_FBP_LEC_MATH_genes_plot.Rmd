@@ -1,0 +1,109 @@
+load("Celegans_expanded_specific_OGs.RData")
+load("RNAseq_conditions_FC.RData")
+#up regulated
+RNAseq_conditions_FC_up=subset(RNAseq_conditions_FC,RNAseq_conditions_FC$log2FoldChange > 1.58)
+a=aggregate(log2FoldChange ~ WBGene,RNAseq_conditions_FC_up,mean)
+b=aggregate(pvalue ~ WBGene,RNAseq_conditions_FC_up,mean)
+RNAseq_conditions_FC_up_mean=merge(a,b,by="WBGene")
+RNAseq_conditions_FC_up_mean$minus_log10P=-log10(RNAseq_conditions_FC_up_mean$pvalue)
+RNAseq_conditions_FC_up_mean_2251=RNAseq_conditions_FC_up_mean[RNAseq_conditions_FC_up_mean$WBGene %in% Celegans_expanded_specific_OGs$WBGene,]
+
+library(dplyr)
+setwd("D:/Zheng lab/wild isolates/SV_III/Figure1/protein_domain")
+domain=read.csv("Domain_11_species.csv",header=T)
+domain_elegans=filter(domain,species=="elegans")
+RNAseq_conditions_FC_up_mean_2251_Lectin_C=RNAseq_conditions_FC_up_mean_2251[RNAseq_conditions_FC_up_mean_2251$WBGene %in% domain_elegans[grep("\\bLectin_C\\b",domain_elegans$domain),]$Wb,]
+RNAseq_conditions_FC_up_mean_2251_MATH=RNAseq_conditions_FC_up_mean_2251[RNAseq_conditions_FC_up_mean_2251$WBGene %in% domain_elegans[grep("\\bMATH\\b",domain_elegans$domain),]$Wb,]
+RNAseq_conditions_FC_up_mean_2251_FBP=RNAseq_conditions_FC_up_mean_2251[RNAseq_conditions_FC_up_mean_2251$WBGene %in% domain_elegans[grep("\\bF-box|FBA_2|FTH|HTH_48\\b",domain_elegans$domain),]$Wb,]
+FBP_MATH_lectinC=rbind(RNAseq_conditions_FC_up_mean_2251_Lectin_C,RNAseq_conditions_FC_up_mean_2251_MATH,RNAseq_conditions_FC_up_mean_2251_FBP)
+RNAseq_conditions_FC_up_mean_2251_no_FBP_MATH_LectinC=RNAseq_conditions_FC_up_mean_2251[RNAseq_conditions_FC_up_mean_2251$WBGene %in% setdiff(RNAseq_conditions_FC_up_mean_2251$WBGene,FBP_MATH_lectinC$Wb),]
+
+
+#down regulated
+RNAseq_conditions_FC_down=subset(RNAseq_conditions_FC,RNAseq_conditions_FC$log2FoldChange < -1.58)
+a=aggregate(log2FoldChange ~ WBGene,RNAseq_conditions_FC_down,mean)
+b=aggregate(pvalue ~ WBGene,RNAseq_conditions_FC_down,mean)
+RNAseq_conditions_FC_down_mean=merge(a,b,by="WBGene")
+RNAseq_conditions_FC_down_mean$minus_log10P=-log10(RNAseq_conditions_FC_down_mean$pvalue)
+RNAseq_conditions_FC_down_mean_2251=RNAseq_conditions_FC_down_mean[RNAseq_conditions_FC_down_mean$WBGene %in% Celegans_expanded_specific_OGs$WBGene,]
+
+RNAseq_conditions_FC_down_mean_2251_Lectin_C=RNAseq_conditions_FC_down_mean_2251[RNAseq_conditions_FC_down_mean_2251$WBGene %in% domain_elegans[grep("\\bLectin_C\\b",domain_elegans$domain),]$Wb,]
+RNAseq_conditions_FC_down_mean_2251_MATH=RNAseq_conditions_FC_down_mean_2251[RNAseq_conditions_FC_down_mean_2251$WBGene %in% domain_elegans[grep("\\bMATH\\b",domain_elegans$domain),]$Wb,]
+RNAseq_conditions_FC_down_mean_2251_FBP=RNAseq_conditions_FC_down_mean_2251[RNAseq_conditions_FC_down_mean_2251$WBGene %in% domain_elegans[grep("\\bF-box|FBA_2|FTH|HTH_48\\b",domain_elegans$domain),]$Wb,]
+FBP_MATH_lectinC=rbind(RNAseq_conditions_FC_down_mean_2251_Lectin_C,RNAseq_conditions_FC_down_mean_2251_MATH,RNAseq_conditions_FC_down_mean_2251_FBP)
+RNAseq_conditions_FC_down_mean_2251_no_FBP_MATH_LectinC=RNAseq_conditions_FC_down_mean_2251[RNAseq_conditions_FC_down_mean_2251$WBGene %in% setdiff(RNAseq_conditions_FC_down_mean_2251$WBGene,FBP_MATH_lectinC$Wb),]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
