@@ -1,0 +1,28 @@
+load("Singletons.RData")
+load("Allgenes.RData")
+load("Celegans_specific_OGs.RData")
+load("Celegans_expanded_OGs.RData")
+load("dNdS_M1.RData")
+
+library(dplyr)
+setwd("D:/Zheng lab/wild isolates/SV_III/Figure1/Fig1D_dNdS_M1")
+M1_w=read.csv("M1_dn_ds_w_all.csv",header=T)
+M1_w_2=filter(M1_w,ds > 0.0005)
+M1_w_2=filter(M1_w_2,dn > 0.0005)
+M1_w_2=filter(M1_w_2,w < 999)
+dNdS_M1=merge(M1_w_2,allgenes19997,by.x = "wb",by.y = "WBGene")
+
+setwd("D:/Zheng lab/wild isolates/SV_III/Figure3/Fig3B_dNdS")
+pdf("dNdS_1to1_expand_specific.pdf")
+plot(ecdf(dNdS_M1$w),verticals = TRUE,do.points =F,ylab="Cumulative Fraction",xlab="dN/dS",xlim=c(0,2),main="",col="black",lwd=6,cex.lab=1.5,cex.axis=2)
+lines(ecdf(dNdS_M1[dNdS_M1$wb %in% unique(Celegans_specific_OGs$WBGene),]$w),verticals = TRUE, do.points =F,col="green",lwd=6)
+lines(ecdf(dNdS_M1[dNdS_M1$wb %in% unique(Celegans_expanded_OGs$WBGene),]$w),verticals = TRUE, do.points =F,col="red",lwd=6)
+lines(ecdf(dNdS_M1[dNdS_M1$wb %in% unique(Singletons$WBGene),]$w),verticals = TRUE, do.points =F,col="blue",lwd=6)
+legend("bottomright",legend=c("All genes","C. elegans-specific OGs","C. elegans-expanded OGs","Singletons"),lty=c(1,1),col=c("black","green","red","blue"),ncol=1,bty="n",inset=0.03,cex=1.6,lwd=6,text.font = 2)
+dev.off()
+
+
+
+
+
+
