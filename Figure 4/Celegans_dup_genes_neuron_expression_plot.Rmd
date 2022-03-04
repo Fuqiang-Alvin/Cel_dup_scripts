@@ -1,0 +1,478 @@
+#2paralogs
+load("Paralogs2_neuron_expression.RData")
+library(dplyr)
+library(RColorBrewer)
+library(gplots)
+my_palette <- colorRampPalette(c("white","red"))(n = 299)# or just red
+col_breaks = c(seq(0,5.5,length=150),  # for green
+                seq(5.51,11,length=150))           # for black
+
+
+count=seq(from = 0, to = 176,by=2)
+count2=c(0,128)
+setwd("D:/Zheng lab/wild isolates/SV_III/Figure6_Fig4/heatmap_figA_B")
+heatmap.2(Paralogs2_neuron_expression,
+          density.info="none",  
+          key=T, keysize=1.0,
+          scale="none",
+          trace="none",      
+          col=my_palette,       # use on color palette defined earlier
+          breaks=col_breaks,   
+          dendrogram="none",     # only draw a row dendrogram
+          Colv="NA",
+          Rowv="NA",
+          rowsep = count,colsep = count2,labRow = F,
+          sepcolor = "grey",
+          sepwidth = c(0.01,0)
+)            # turn off column clustering
+
+
+#more than 2 paralogs
+domain=read.csv("Domain_11_species.csv",header=T)
+library(dplyr)
+domain_elegans=filter(domain,species=="elegans")
+domain_elegans2=domain_elegans[,c(17,7,1)]
+load("Allgenes.RData")
+load("neurons_expression.RData")
+load("Celegans_expanded_specific_OGs.RData")
+load("Singletons.RData")
+Celegans_expanded_specific_OGs_domain=merge(Celegans_expanded_specific_OGs,domain_elegans2,by.x ="WBGene",by.y ="Wb")
+#####OG0000068,srh OG0000668,FBP, OG0000453,MATH OG0001800,LEC OG0000041,IRLD OG0000020,OAC
+example=Celegans_expanded_specific_OGs[grep("\\OG0000068|OG0000668|OG0000453|OG0001800|OG0000041|OG0000020\\b",Celegans_expanded_specific_OGs$Orthogroup),]
+
+result_1to1=neurons_expression[neurons_expression$Gene.ID %in% Singletons$elegans_longest_transcript,]
+for (i in 1:nrow(result_1to1)){
+    result_1to1[i,"percent50"]=sum(result_1to1[i,4:131]>0,na.rm=T)
+}
+result_1to1_less50=filter(result_1to1,percent50 < 64)
+set.seed(20)
+singleton=result_1to1_less50[result_1to1_less50$Gene.ID %in% sample(result_1to1_less50$Gene.ID,size=20,replace=F),]
+singleton$Orthogroup="singleton"
+singleton=singleton[,c(133,1,4:131)]
+
+a=merge(example,neurons_expression,by.x = "WBGene",by.y="X")
+a=a[,c(2,1,5:132)]
+names(a)[names(a)=="WBGene"]="X"
+b=rbind(a,singleton)
+b=b[order(b$Orthogroup),]
+c=rbind(b[grep("OG0000068",b$Orthogroup),],b[grep("OG0000668",b$Orthogroup),],b[grep("OG0000453",b$Orthogroup),],b[grep("OG0001800",b$Orthogroup),],b[grep("OG0000041",b$Orthogroup),],b[grep("OG0000020",b$Orthogroup),],b[grep("singleton",b$Orthogroup),])
+c=as.matrix(log2(c[,3:130]+1))
+
+library(dplyr)
+library(RColorBrewer)
+library(gplots)
+my_palette <- colorRampPalette(c("white","red"))(n = 299)# or just red
+col_breaks = c(seq(0,5.5,length=150),  # for green
+                seq(5.51,11,length=150))           # for black
+setwd("D:/Zheng lab/wild isolates/SV_III/Figure6_Fig4/heatmap_figA_B")
+count=c(0,30,51,78,93,116,138,158)
+count2=c(0,128)
+heatmap.2(c,
+          density.info="none",  
+          key=T, keysize=1.0,
+          scale="none",
+          trace="none",      
+          col=my_palette,       # use on color palette defined earlier
+          breaks=col_breaks,   
+          dendrogram="none",     # only draw a row dendrogram
+          Colv="NA",
+          Rowv="NA",
+          rowsep = count,colsep = count2,labRow = F,
+          sepcolor = "grey",
+          sepwidth = c(0.01,0)
+)            # turn off column clustering
+
+
+#OGs with more expanded & specific genes
+exp_spe_neuron=merge(Celegans_expanded_specific_OGs,neurons_expression,by.x = "WBGene",by.y = "Gene.ID")
+goname=unique(exp_spe_neuron$Orthogroup)
+genelist=list()
+library(dplyr)
+for (i in 1:321){
+genelist[[i]]=filter(exp_spe_neuron,Orthogroup== goname[i])$WBGene
+}
+
+df=list()
+for (i in 1:321){
+df[[i]]=exp_spe_neuron[exp_spe_neuron$WBGene %in% genelist[[i]],]
+}
+df[which(lapply(df, nrow ) >=2)] -> x
+
+for (i in 1:292){
+ rownames(x[[i]])=x[[i]]$WBGene
+ x[[i]]=x[[i]][,c(5:132)]
+ }
+
+cordfp <- list()
+cordf <- list()
+for(i in 1:292 ){
+  cordfp[[i]] <- c()
+  cordf[[i]] <- c()
+  index=1
+  cur <- as.data.frame(x[[i]])
+  cnt <- nrow(cur)
+  for(j in 1:(cnt-1)){
+    
+    for(k in (j+1) : cnt ){
+     if(sum(cur[k,]) == 0 ){
+      next()
+     }
+     curtest <- cor.test( unlist(cur[j,]),unlist( cur[k,]) )
+     curcor <- as.double(curtest$estimate)
+     curcorp <- as.double(curtest$p.value)
+     if(index==1){
+       cordf[[i]] <- curcor
+       cordfp[[i]] <- curcorp
+       index=2
+     }else{
+       cordf[[i]] <- append(cordf[[i]] , curcor)
+       cordfp[[i]] <- append(cordfp[[i]] , curcorp)
+     }
+    }
+  }
+}
+
+corhist <- as.data.frame(matrix(ncol=3))
+for(i in 1:292){
+if (length(cordf[[i]]) == 0){
+next()}
+  cur <- as.data.frame(matrix(ncol=3,nrow=length(cordf[[i]])))
+  cur[,2] <- cordf[[i]]
+  cur[,3] <- cordfp[[i]]
+  cur[,1] <- nrow(x[[i]])
+  corhist <- bind_rows(corhist, cur)
+}
+colnames(corhist) <- c("Gene_number_in_this_OG","cor" , "pvalue")
+corhist$Type <- "Expanded_specific"
+corhist <- corhist[2:nrow(corhist),]
+
+#Singletons
+genes1to1_neuron=merge(Singletons,neurons_expression,by.x = "WBGene",by.y = "Gene.ID")
+
+for (i in 1:nrow(genes1to1_neuron)){
+    genes1to1_neuron[i,"percent50"]=sum(genes1to1_neuron[i,5:131]>0,na.rm=T)
+}
+library(dplyr)
+genes1to1_neuron_less50=filter(genes1to1_neuron,percent50 < 64)
+
+aaa=replicate(13431,{x=sample(genes1to1_neuron_less50$X,size=2,replace=F)})
+#b=replicate(100,{genes1to1_neuron_less50[genes1to1_neuron_less50$X %in% sample(genes1to1_neuron_less50$X,size=2,replace=T),]})
+bbb=list()
+for (i in 1:13431) {
+         bbb[[i]]=genes1to1_neuron_less50[genes1to1_neuron_less50$X %in% aaa[,i],]
+}
+
+single=list()
+singlep=list()
+for (i in 1:13431){
+ index=1
+ curtest=cor.test(unlist(bbb[[i]][1,5:132]),unlist(bbb[[i]][2,5:132]))
+ curcor= as.double(curtest$estimate)
+ curcorp= as.double(curtest$p.value)
+ if(index ==1){
+ single[[i]]=curcor
+ singlep[[i]]=curcorp
+ index=2} else{
+ single[[i]]=append(single[[i]],curcor)
+ singlep[[i]]=append(singlep[[i]],curcorp)}
+}
+
+corhist_single <- as.data.frame(matrix(ncol=3))
+for(i in 1:13431){
+if (length(single[[i]]) == 0){
+next()}
+  cur <- as.data.frame(matrix(ncol=3,nrow=length(single[[i]])))
+  cur[,2] <- single[[i]]
+  cur[,3] <- singlep[[i]]
+  cur[,1] <- nrow(bbb[[i]])
+  corhist_single <- bind_rows(corhist_single, cur)
+}
+colnames(corhist_single) <- c("Gene_number_in_this_OG","cor" , "pvalue")
+corhist_single$Type <- "singleton"
+
+corhist2=bind_rows(corhist,corhist_single)
+library(ggplot2)
+ggplot(corhist2) + geom_density(alpha=0.6, aes(x=cor, color=Type, fill=Type))+
+    labs(title="Correlation of Expanded C. elegans genes" , x="Pairwise correlation coefficient of expression",y="Probability Density")+ scale_color_manual(values=c("orangered", "steelblue"))+ scale_fill_manual(values=c("orangered", "steelblue"))+ theme_classic()
+
+
+
+#C.elegans specific genes with 2 genes
+load("Celegans_specific_OGs.RData")
+a=data.frame(summary(Celegans_specific_OGs$Orthogroup,maxsum=max(lengths(lapply(Celegans_specific_OGs,unique)))))
+library(dplyr)
+bbb=rownames(filter(a,a[,1] == 2))
+result_specific= merge(Celegans_specific_OGs,neurons_expression,by.x="WBGene",by.y = "Gene.ID")
+
+df=list()
+for (i in 1:126){
+         df[[i]]=result_specific[result_specific$Orthogroup %in% bbb[i],]
+}
+
+df[which(lapply(df,nrow) ==2)] -> x
+specific=list()
+specificp=list()
+for (i in 1:88){
+ index=1
+ curtest=cor.test(unlist(x[[i]][1,5:132]),unlist(x[[i]][2,5:132]))
+ curcor= as.double(curtest$estimate)
+ curcorp= as.double(curtest$p.value)
+ if(index ==1){
+ specific[[i]]=curcor
+ specificp[[i]]=curcorp
+ index=2} else{
+ specific[[i]]=append(specific[[i]],curcor)
+ specificp[[i]]=append(specificp[[i]],curcorp)}
+}
+
+corhist_specific <- as.data.frame(matrix(ncol=3))
+for(i in 1:88){
+if (length(specific[[i]]) == 0){
+next()}
+  cur <- as.data.frame(matrix(ncol=3,nrow=length(specific[[i]])))
+  cur[,2] <- specific[[i]]
+  cur[,3] <- specificp[[i]]
+  cur[,1] <- nrow(x[[i]])
+  corhist_specific <- bind_rows(corhist_specific, cur)
+}
+colnames(corhist_specific) <- c("Gene_number_in_this_OG","cor" , "pvalue")
+corhist_specific$Type <- "specific"
+corhist_specific <- corhist_specific[2:nrow(corhist_specific),]
+
+#expanded with 10genes
+load("Celegans_expanded_OGs.RData")
+a=data.frame(summary(Celegans_expanded_OGs$Orthogroup,maxsum=max(lengths(lapply(Celegans_expanded_OGs,unique)))))
+library(dplyr)
+bbb=rownames(filter(a,a[,1] == 10))
+result_expand= merge(Celegans_expanded_OGs,neurons_expression,by.x="WBGene",by.y = "Gene.ID")
+
+df=list()
+for (i in 1:5){
+    df[[i]]=result_expand[result_expand$Orthogroup %in% bbb[i],]
+}
+df[which(lapply(df,nrow) >= 2)] -> x
+for (i in 1:5){
+     rownames(x[[i]])=x[[i]]$WBGene
+    x[[i]]=x[[i]][,c(5:132)]}
+expand10=list()
+expand10p=list()
+for (i in 1:5){
+ expand10[[i]]=c()
+ expand10p[[i]]=c()
+ cur = as.data.frame(x[[i]])
+ cnt=nrow(cur)
+ index=1
+ for (j in 1:(cnt-1)){
+ for (k in (j+1):cnt){
+ if (sum(cur[k,]) == 0){
+ next()}
+ curtest=cor.test(unlist(cur[j,]),unlist(cur[k,]))
+ curcor= as.double(curtest$estimate)
+ curcorp= as.double(curtest$p.value)
+ if(index ==1){
+ expand10[[i]]=curcor
+ expand10p[[i]]=curcorp
+ index=2} else{
+ expand10[[i]]=append(expand10[[i]],curcor)
+ expand10p[[i]]=append(expand10p[[i]],curcorp)}
+}}}
+
+corhist_expand10 <- as.data.frame(matrix(ncol=3))
+for(i in 1:5){
+if (length(expand10[[i]]) == 0){
+next()}
+  cur <- as.data.frame(matrix(ncol=3,nrow=length(expand10[[i]])))
+  cur[,2] <- expand10[[i]]
+  cur[,3] <- expand10p[[i]]
+  cur[,1] <- nrow(df[[i]])
+  corhist_expand10 <- bind_rows(corhist_expand10, cur)
+}
+colnames(corhist_expand10) <- c("Gene_number_in_this_OG","cor" , "pvalue")
+corhist_expand10$Type <- "expand10"
+corhist_expand10 <- corhist_expand10[2:nrow(corhist_expand10),]
+
+#expanded with 20genes
+a=data.frame(summary(Celegans_expanded_OGs$Orthogroup,maxsum=max(lengths(lapply(Celegans_expanded_OGs,unique)))))
+library(dplyr)
+bbb=rownames(filter(a,a[,1] >= 20))
+result_expand= merge(Celegans_expanded_OGs,neurons_expression,by.x="WBGene",by.y = "Gene.ID")
+
+df=list()
+for (i in 1:14){
+    df[[i]]=result_expand[result_expand$Orthogroup %in% bbb[i],]
+}
+df[which(lapply(df,nrow) >= 2)] -> x
+for (i in 1:14){
+     rownames(x[[i]])=x[[i]]$WBGene
+    x[[i]]=x[[i]][,c(5:132)]}
+expand20=list()
+expand20p=list()
+for (i in 1:14){
+ expand20[[i]]=c()
+ expand20p[[i]]=c()
+ cur = as.data.frame(x[[i]])
+ cnt=nrow(cur)
+ index=1
+ for (j in 1:(cnt-1)){
+ for (k in (j+1):cnt){
+ if (sum(cur[k,]) == 0){
+ next()}
+ curtest=cor.test(unlist(cur[j,]),unlist(cur[k,]))
+ curcor= as.double(curtest$estimate)
+ curcorp= as.double(curtest$p.value)
+ if(index ==1){
+ expand20[[i]]=curcor
+ expand20p[[i]]=curcorp
+ index=2} else{
+ expand20[[i]]=append(expand20[[i]],curcor)
+ expand20p[[i]]=append(expand20p[[i]],curcorp)}
+}}}
+
+corhist_expand20 <- as.data.frame(matrix(ncol=3))
+for(i in 1:14){
+if (length(expand20[[i]]) == 0){
+next()}
+  cur <- as.data.frame(matrix(ncol=3,nrow=length(expand20[[i]])))
+  cur[,2] <- expand20[[i]]
+  cur[,3] <- expand20p[[i]]
+  cur[,1] <- nrow(df[[i]])
+  corhist_expand20 <- bind_rows(corhist_expand20, cur)
+}
+colnames(corhist_expand20) <- c("Gene_number_in_this_OG","cor" , "pvalue")
+corhist_expand20$Type <- "expand20"
+corhist_expand20 <- corhist_expand20[2:nrow(corhist_expand20),]
+
+corhist=bind_rows(corhist_specific,corhist_expand20,corhist_expand10)
+library(ggplot2)
+ggplot(corhist) + geom_density(alpha=0.6, aes(x=cor, color=Type, fill=Type))+
+    labs(title="Correlation of Expanded C. elegans genes" , x="Pairwise correlation coefficient of expression",y="Probability Density")+ scale_color_manual(values=c("green", "deeppink", "purple"))+ scale_fill_manual(values=c("green", "deeppink", "purple"))+ theme_classic()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+genes1to1_neuron_less50 = genes1to1_neuron_less50[,5:132]
+  index=1
+  cnt <- nrow(genes1to1_neuron_less50)
+  for(j in 1:(cnt-1)){
+    
+    for(k in (j+1) : cnt ){
+     if(sum(genes1to1_neuron_less50[k,]) == 0 ){
+      next()
+     }
+     curtest <- cor.test( unlist(genes1to1_neuron_less50[j,]),unlist( genes1to1_neuron_less50[k,]) )
+     curcor <- as.double(curtest$estimate)
+     curcorp <- as.double(curtest$p.value)
+     if(index==1){
+       cordf <- curcor
+       cordfp <- curcorp
+       index=2
+     }else{
+       cordf <- append(cordf, curcor)
+       cordfp <- append(cordfp, curcorp)
+     }
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
