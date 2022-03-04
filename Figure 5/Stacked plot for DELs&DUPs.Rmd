@@ -1,0 +1,91 @@
+load("Cel_dup_N0.RData")
+load("Cel_dup_N1N3.RData")
+load("Cel_dup_N4Cel.RData")
+load("Singletons.RData")
+load("Celegans_expanded_specific_OGs.RData")
+load("pi_TajimaDD_ThetaW_FayWuH_Fst_pNpS.RData)
+load("others.RData")
+
+#DELs&DUPs
+load("DELs_DUPs_strains.RData")
+result = as.data.frame(matrix(nrow=4, ncol=6,data=0))
+library(dplyr)
+for (i in 1:6){
+a=filter(DELs_DUPs_strains,uniquecnt >= 579)
+result[1,i] = nrow(a[a$gene %in% all[[i]]$WBGene,])
+b=filter(DELs_DUPs_strains,uniquecnt < 579 & uniquecnt >= 386)
+result[2,i] = nrow(b[b$gene %in% all[[i]]$WBGene,])
+c=filter(DELs_DUPs_strains,uniquecnt < 385 & uniquecnt >= 193)
+result[3,i] = nrow(c[c$gene %in% all[[i]]$WBGene,])
+d=filter(DELs_DUPs_strains,uniquecnt < 193)
+result[4,i] = nrow(d[d$gene %in% all[[i]]$WBGene,])
+}
+colnames(result)=c("others","singletons","N0","N3N1","N4Cel","expand&specific")
+rownames(result)=c("freq_more0.75","freq0.5_0.75","freq0.25_0.5","freq_less0.25")
+
+result2=as.data.frame(matrix(nrow=4,ncol=6))
+for (i in 1:4) {
+ for (j in 1:6){
+ result2[i,j]=result[i,j]/sum(result[,j])
+ }}
+colnames(result2)=c("others","singletons","N0","N3N1","N4Cel","expand&specific")
+rownames(result2)=c("freq_more0.75","freq0.5_0.75","freq0.25_0.5","freq_less0.25")
+t(result2)
+
+#domain
+setwd("D:/Zheng lab/wild isolates/SV_III/Figure1/protein_domain")
+domain=read.csv("pfam_11_species_longest.csv",header=T)
+library(dplyr)
+domain_elegans=filter(domain,species == "elegans")
+a=filter(DELs_DUPs_strains,uniquecnt >= 579)
+expspe_579 = a[a$gene %in% all[[6]]$WBGene,]
+N4Cel_579 = a[a$gene %in% all[[5]]$WBGene,]
+expspe_N4Cel_579_domain=domain_elegans[domain_elegans$Wb %in% unique(c(as.character(expspe_579$gene),as.character(N4Cel_579$gene))),]
+domain_summary=as.data.frame(summary(expspe_N4Cel_579_domain$domain,maxsum=max(lengths(lapply(expspe_N4Cel_579_domain,unique)))))
+
+
+#frequency
+load("DELs_freq.RData")
+result = as.data.frame(matrix(nrow=4, ncol=6,data=0))
+library(dplyr)
+for (i in 1:6){
+a=filter(DELs_freq,freq >= 0.1)
+result[1,i] = nrow(a[a$gene %in% all[[i]]$WBGene,])
+b=filter(DELs_freq,freq < 0.1 & freq >= 0.01)
+result[2,i] = nrow(b[b$gene %in% all[[i]]$WBGene,])
+c=filter(DELs_freq,freq < 0.01 & freq >= 0.001)
+result[3,i] = nrow(c[c$gene %in% all[[i]]$WBGene,])
+d=filter(DELs_freq,freq < 0.001)
+result[4,i] = nrow(d[d$gene %in% all[[i]]$WBGene,])
+}
+colnames(result)=c("others","singletons","N0","N3N1","N4Cel","expand&specific")
+rownames(result)=c("freq_more10%","freq_1_10%","freq0.1_1%","freq_less0.1%")
+
+result2=as.data.frame(matrix(nrow=4,ncol=6))
+for (i in 1:4) {
+ for (j in 1:6){
+ result2[i,j]=result[i,j]/sum(result[,j])
+ }}
+colnames(result2)=c("others","singletons","N0","N3N1","N4Cel","expand&specific")
+rownames(result2)=c("freq_more10%","freq_1_10%","freq0.1_1%","freq_less0.1%")
+t(result2)
+
+#domain
+setwd("D:/Zheng lab/wild isolates/SV_III/Figure1/protein_domain")
+domain=read.csv("pfam_11_species_longest.csv",header=T)
+library(dplyr)
+domain_elegans=filter(domain,species == "elegans")
+a=filter(DELs_freq,freq >= 0.1)
+expspe_freq0.1 = a[a$gene %in% all[[6]]$WBGene,]
+N4Cel_freq0.1 = a[a$gene %in% all[[5]]$WBGene,]
+expspe_N4Cel_freq0.1_domain=domain_elegans[domain_elegans$Wb %in% c(as.character(expspe_freq0.1$gene),as.character(N4Cel_freq0.1$gene)),]
+domain_summary=as.data.frame(summary(expspe_N4Cel_freq0.1_domain$domain,maxsum=max(lengths(lapply(expspe_N4Cel_freq0.1_domain,unique)))))
+
+
+
+
+
+
+
+
+
